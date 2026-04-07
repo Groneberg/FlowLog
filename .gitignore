@@ -10,6 +10,7 @@
 .history
 .svn/
 .swiftpm/
+*.g.dart
 migrate_working_dir/
 
 # IntelliJ related
