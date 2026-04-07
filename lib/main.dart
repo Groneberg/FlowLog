@@ -1,4 +1,5 @@
 import 'package:flow_log/src/data/services/database_service.dart';
+import 'package:flow_log/src/data/services/validation_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'src/data/model/meter_entries.dart';
@@ -23,15 +24,13 @@ class FlowLogApp extends StatelessWidget {
     return MaterialApp(
       title: 'FlowLog Debug',
       theme: ThemeData(
-        brightness: Brightness.dark, 
+        brightness: Brightness.dark,
         primarySwatch: Colors.blue,
       ),
       home: const TestDataScreen(),
     );
   }
 }
-
-// --- temporery test screen to interact with the database ---
 
 class TestDataScreen extends StatefulWidget {
   const TestDataScreen({super.key});
@@ -61,8 +60,9 @@ class _TestDataScreenState extends State<TestDataScreen> {
                     value: _selectedCategory,
                     isExpanded: true,
                     onChanged: (val) => setState(() => _selectedCategory = val!),
-                    items: MeterCategory.values.map((c) => 
-                      DropdownMenuItem(value: c, child: Text(c.name))).toList(),
+                    items: MeterCategory.values
+                        .map((c) => DropdownMenuItem(value: c, child: Text(c.name)))
+                        .toList(),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -77,29 +77,58 @@ class _TestDataScreenState extends State<TestDataScreen> {
                   icon: const Icon(Icons.add_box, color: Colors.green),
                   onPressed: () async {
                     final val = double.tryParse(_controller.text);
-                    if (val != null) {
-                      await database.into(database.meterEntries).insert(
-                        MeterEntriesCompanion.insert(
-                          value: val,
-                          category: _selectedCategory,
+                    if (val == null) return;
+
+                    final validator = ValidationService(dbService: database);
+                    final result = await validator.validateEntry(val, _selectedCategory);
+
+                    if (!mounted) return;
+
+                    if (result.status == ValidationStatus.errorLowerThanPrevious) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(result.message!),
+                          backgroundColor: Colors.red,
                         ),
                       );
-                      _controller.clear();
+                      return;
                     }
+
+                    if (result.status == ValidationStatus.warningExtremelyHigh) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(result.message!),
+                          backgroundColor: Colors.orange,
+                        ),
+                      );
+                    }
+
+                    await database.into(database.meterEntries).insert(
+                          MeterEntriesCompanion.insert(
+                            value: val,
+                            category: _selectedCategory,
+                          ),
+                        );
+
+                    _controller.clear();
+                    FocusManager.instance.primaryFocus?.unfocus();
                   },
                 ),
               ],
             ),
           ),
           const Divider(),
-          const Text("DB Inhalt (Live Stream):", style: TextStyle(fontWeight: FontWeight.bold)),
+          const Text("DB Inhalt (Live Stream):",
+              style: TextStyle(fontWeight: FontWeight.bold)),
           Expanded(
             child: StreamBuilder<List<MeterEntry>>(
               stream: database.select(database.meterEntries).watch(),
               builder: (context, snapshot) {
                 final entries = snapshot.data ?? [];
-                if (entries.isEmpty) return const Center(child: Text("Keine Daten vorhanden"));
-                
+                if (entries.isEmpty) {
+                  return const Center(child: Text("Keine Daten vorhanden"));
+                }
+
                 return ListView.builder(
                   itemCount: entries.length,
                   itemBuilder: (context, index) {
@@ -110,7 +139,8 @@ class _TestDataScreenState extends State<TestDataScreen> {
                       subtitle: Text(e.timestamp.toIso8601String()),
                       trailing: IconButton(
                         icon: const Icon(Icons.delete, size: 18),
-                        onPressed: () => database.delete(database.meterEntries).delete(e),
+                        onPressed: () =>
+                            database.delete(database.meterEntries).delete(e),
                       ),
                     );
                   },
@@ -124,11 +154,15 @@ class _TestDataScreenState extends State<TestDataScreen> {
   }
 
   IconData _getIcon(MeterCategory cat) {
-    switch(cat) {
-      case MeterCategory.electricity: return Icons.bolt;
-      case MeterCategory.waterCold: return Icons.water_drop;
-      case MeterCategory.waterWarm: return Icons.hot_tub;
-      case MeterCategory.gas: return Icons.local_fire_department;
+    switch (cat) {
+      case MeterCategory.electricity:
+        return Icons.bolt;
+      case MeterCategory.waterCold:
+        return Icons.water_drop;
+      case MeterCategory.waterWarm:
+        return Icons.hot_tub;
+      case MeterCategory.gas:
+        return Icons.local_fire_department;
     }
   }
 }
