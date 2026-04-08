@@ -15,7 +15,7 @@ class ValidationResult {
 class ValidationService {
   final AppDatabase _db;
 
-  // Konstruktor mit benanntem Parameter 'dbService'
+  // WICHTIG: Nutze geschweifte Klammern für den benannten Parameter
   ValidationService({required AppDatabase dbService}) : _db = dbService;
 
   Future<ValidationResult> validateEntry(double newValue, MeterCategory category) async {
@@ -43,7 +43,7 @@ class ValidationService {
     if (delta > 500) {
       return ValidationResult(
         ValidationStatus.warningExtremelyHigh,
-        message: "Warnung: Hoher Verbrauch (+${delta.toStringAsFixed(2)}). Tippfehler?",
+        message: "Warnung: Hoher Verbrauch (+${delta.toStringAsFixed(2)}).",
         delta: delta,
       );
     }

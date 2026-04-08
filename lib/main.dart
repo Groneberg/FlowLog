@@ -1,5 +1,6 @@
 import 'package:flow_log/src/data/services/database_service.dart';
 import 'package:flow_log/src/data/services/validation_service.dart';
+import 'package:flow_log/src/features/Home/screen/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'src/data/model/meter_entries.dart';
@@ -27,7 +28,7 @@ class FlowLogApp extends StatelessWidget {
         brightness: Brightness.dark,
         primarySwatch: Colors.blue,
       ),
-      home: const TestDataScreen(),
+      home: const HomeScreen(),
     );
   }
 }
