@@ -11,8 +11,7 @@ class ElectricityDetailScreen extends StatefulWidget {
   const ElectricityDetailScreen({super.key});
 
   @override
-  State<ElectricityDetailScreen> createState() =>
-      _ElectricityDetailScreenState();
+  State<ElectricityDetailScreen> createState() => _ElectricityDetailScreenState();
 }
 
 class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
@@ -34,10 +33,9 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
 
     final newest = entries.first;
     final oldest = entries.last;
-
-    final daysDiff =
-        newest.timestamp.difference(oldest.timestamp).inSeconds / 86400.0;
-    if (daysDiff <= 0) return '--';
+    
+    final daysDiff = newest.timestamp.difference(oldest.timestamp).inSeconds / 86400.0;
+    if (daysDiff <= 0) return '--'; 
 
     final totalConsumption = newest.value - oldest.value;
     final dailyAverage = totalConsumption / daysDiff;
@@ -51,13 +49,13 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
         multiplier = 7.0;
         break;
       case TimePeriod.month:
-        multiplier = 30.416;
+        multiplier = 30.416; 
         break;
       case TimePeriod.year:
-        multiplier = 365.25;
+        multiplier = 365.25; 
         break;
       case TimePeriod.last:
-        return '';
+        return ''; 
     }
 
     return (dailyAverage * multiplier).toStringAsFixed(1);
@@ -65,17 +63,60 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
 
   String _getPeriodLabel() {
     switch (_selectedPeriod) {
-      case TimePeriod.last:
-        return 'Since Last';
-      case TimePeriod.day:
-        return 'Avg / Day';
-      case TimePeriod.week:
-        return 'Avg / Week';
-      case TimePeriod.month:
-        return 'Avg / Month';
-      case TimePeriod.year:
-        return 'Avg / Year';
+      case TimePeriod.last: return 'Since Last';
+      case TimePeriod.day: return 'Avg / Day';
+      case TimePeriod.week: return 'Avg / Week';
+      case TimePeriod.month: return 'Avg / Month';
+      case TimePeriod.year: return 'Avg / Year';
     }
+  }
+
+  // --- NEU: Dialog zum Bearbeiten eines Eintrags ---
+  Future<void> _showEditDialog(BuildContext context, MeterEntry entry, AppDatabase database) async {
+    final editController = TextEditingController(text: entry.value.toString());
+    
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Edit Entry'),
+          content: TextField(
+            controller: editController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(
+              labelText: 'Reading',
+              suffixText: 'kWh',
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Colors.amber, width: 2),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.amber,
+                foregroundColor: Colors.black87,
+              ),
+              onPressed: () async {
+                final newValue = double.tryParse(editController.text);
+                if (newValue != null && newValue != entry.value) {
+                  final updatedEntry = entry.copyWith(value: newValue);
+                  await database.update(database.meterEntries).replace(updatedEntry);
+                }
+                if (context.mounted) Navigator.pop(context);
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -104,9 +145,7 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
                 const SizedBox(height: 16),
                 TextField(
                   controller: _controller,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   decoration: InputDecoration(
                     labelText: 'Reading',
                     filled: true,
@@ -136,13 +175,9 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
                     if (value == null) return;
 
                     final validator = ValidationService(dbService: database);
-                    final result = await validator.validateEntry(
-                      value,
-                      MeterCategory.electricity,
-                    );
+                    final result = await validator.validateEntry(value, MeterCategory.electricity);
 
-                    if (result.status ==
-                        ValidationStatus.errorLowerThanPrevious) {
+                    if (result.status == ValidationStatus.errorLowerThanPrevious) {
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -154,9 +189,7 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
                       return;
                     }
 
-                    await database
-                        .into(database.meterEntries)
-                        .insert(
+                    await database.into(database.meterEntries).insert(
                           MeterEntriesCompanion.insert(
                             value: value,
                             category: MeterCategory.electricity,
@@ -176,20 +209,10 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
           ),
           Expanded(
             child: StreamBuilder<List<MeterEntry>>(
-              stream:
-                  (database.select(database.meterEntries)
-                        ..where(
-                          (t) => t.category.equals(
-                            MeterCategory.electricity.index,
-                          ),
-                        )
-                        ..orderBy([
-                          (t) => drift.OrderingTerm(
-                            expression: t.timestamp,
-                            mode: drift.OrderingMode.desc,
-                          ),
-                        ]))
-                      .watch(),
+              stream: (database.select(database.meterEntries)
+                    ..where((t) => t.category.equals(MeterCategory.electricity.index))
+                    ..orderBy([(t) => drift.OrderingTerm(expression: t.timestamp, mode: drift.OrderingMode.desc)]))
+                  .watch(),
               builder: (context, snapshot) {
                 final entries = snapshot.data ?? [];
 
@@ -204,9 +227,7 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
                         color: themeColor.withValues(alpha: 0.05),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
-                          side: BorderSide(
-                            color: themeColor.withValues(alpha: 0.3),
-                          ),
+                          side: BorderSide(color: themeColor.withValues(alpha: 0.3)),
                         ),
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
@@ -214,27 +235,13 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               SegmentedButton<TimePeriod>(
+                                showSelectedIcon: false,
                                 segments: const [
-                                  ButtonSegment(
-                                    value: TimePeriod.last,
-                                    label: Text('Last'),
-                                  ),
-                                  ButtonSegment(
-                                    value: TimePeriod.day,
-                                    label: Text('D'),
-                                  ),
-                                  ButtonSegment(
-                                    value: TimePeriod.week,
-                                    label: Text('W'),
-                                  ),
-                                  ButtonSegment(
-                                    value: TimePeriod.month,
-                                    label: Text('M'),
-                                  ),
-                                  ButtonSegment(
-                                    value: TimePeriod.year,
-                                    label: Text('Y'),
-                                  ),
+                                  ButtonSegment(value: TimePeriod.last, label: Text('Last')),
+                                  ButtonSegment(value: TimePeriod.day, label: Text('D')),
+                                  ButtonSegment(value: TimePeriod.week, label: Text('W')),
+                                  ButtonSegment(value: TimePeriod.month, label: Text('M')),
+                                  ButtonSegment(value: TimePeriod.year, label: Text('Y')),
                                 ],
                                 selected: {_selectedPeriod},
                                 onSelectionChanged: (newSelection) {
@@ -244,36 +251,27 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
                                 },
                                 style: SegmentedButton.styleFrom(
                                   visualDensity: VisualDensity.compact,
-                                  selectedBackgroundColor: themeColor
-                                      .withValues(alpha: 0.2),
+                                  selectedBackgroundColor: themeColor.withValues(alpha: 0.2),
                                 ),
                               ),
                               const SizedBox(height: 24),
                               Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        _selectedPeriod == TimePeriod.last
-                                            ? 'Latest Consumption'
+                                        _selectedPeriod == TimePeriod.last 
+                                            ? 'Latest Consumption' 
                                             : 'Average Consumption',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          color: Colors.grey,
-                                        ),
+                                        style: const TextStyle(fontWeight: FontWeight.w500, color: Colors.grey),
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
                                         '${_calculateValue(entries)} kWh',
-                                        style: const TextStyle(
-                                          fontSize: 28,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                        style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                                       ),
                                     ],
                                   ),
@@ -281,10 +279,7 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
                                     padding: const EdgeInsets.only(bottom: 4.0),
                                     child: Text(
                                       _getPeriodLabel(),
-                                      style: const TextStyle(
-                                        color: Colors.grey,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                      style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
                                     ),
                                   ),
                                 ],
@@ -296,10 +291,7 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
                       const SizedBox(height: 24),
                       const Text(
                         'History',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 16),
                       Expanded(
@@ -307,40 +299,58 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
                             ? const Center(child: Text('No entries yet'))
                             : ListView.separated(
                                 itemCount: entries.length,
-                                separatorBuilder: (context, index) =>
-                                    const Divider(),
+                                separatorBuilder: (context, index) => const Divider(),
                                 itemBuilder: (context, index) {
                                   final entry = entries[index];
                                   double? diff;
                                   if (index + 1 < entries.length) {
-                                    diff =
-                                        entry.value - entries[index + 1].value;
+                                    diff = entry.value - entries[index + 1].value;
                                   }
 
-                                  return ListTile(
-                                    contentPadding: EdgeInsets.zero,
-                                    leading: CircleAvatar(
-                                      backgroundColor: themeColor.withValues(
-                                        alpha: 0.2,
+                                  return Dismissible(
+                                    key: ValueKey(entry.id),
+                                    direction: DismissDirection.endToStart,
+                                    background: Container(
+                                      alignment: Alignment.centerRight,
+                                      padding: const EdgeInsets.only(right: 20.0),
+                                      color: Colors.red.withValues(alpha: 0.8),
+                                      child: const Icon(Icons.delete, color: Colors.white),
+                                    ),
+                                    onDismissed: (direction) async {
+                                      await database.delete(database.meterEntries).delete(entry);
+                                      
+                                      if (!context.mounted) return;
+                                      
+                                      ScaffoldMessenger.of(context).clearSnackBars();
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: const Text('Entry deleted'),
+                                          action: SnackBarAction(
+                                            label: 'Undo',
+                                            onPressed: () async {
+                                              await database.into(database.meterEntries).insert(entry);
+                                            },
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    child: ListTile(
+                                      contentPadding: EdgeInsets.zero,
+                                      onTap: () => _showEditDialog(context, entry, database), // --- NEU: Tap to Edit ---
+                                      leading: CircleAvatar(
+                                        backgroundColor: themeColor.withValues(alpha: 0.2),
+                                        child: const Icon(Icons.bolt, color: themeColor),
                                       ),
-                                      child: const Icon(
-                                        Icons.bolt,
-                                        color: themeColor,
+                                      title: Text('${entry.value.toStringAsFixed(1)} kWh'),
+                                      subtitle: Text(
+                                        '${entry.timestamp.year}-${entry.timestamp.month.toString().padLeft(2, '0')}-${entry.timestamp.day.toString().padLeft(2, '0')}',
                                       ),
-                                    ),
-                                    title: Text(
-                                      '${entry.value.toStringAsFixed(1)} kWh',
-                                    ),
-                                    subtitle: Text(
-                                      '${entry.timestamp.year}-${entry.timestamp.month.toString().padLeft(2, '0')}-${entry.timestamp.day.toString().padLeft(2, '0')}',
-                                    ),
-                                    trailing: Text(
-                                      diff != null
-                                          ? '+ ${diff.toStringAsFixed(1)}'
-                                          : 'Start',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.grey,
+                                      trailing: Text(
+                                        diff != null ? '+ ${diff.toStringAsFixed(1)}' : 'Start',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.grey,
+                                        ),
                                       ),
                                     ),
                                   );
