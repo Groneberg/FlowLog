@@ -7,14 +7,14 @@ import '../../../data/model/meter_entries.dart';
 
 enum TimePeriod { last, day, week, month, year }
 
-class ElectricityDetailScreen extends StatefulWidget {
-  const ElectricityDetailScreen({super.key});
+class GasDetailScreen extends StatefulWidget {
+  const GasDetailScreen({super.key});
 
   @override
-  State<ElectricityDetailScreen> createState() => _ElectricityDetailScreenState();
+  State<GasDetailScreen> createState() => _GasDetailScreenState();
 }
 
-class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
+class _GasDetailScreenState extends State<GasDetailScreen> {
   final _controller = TextEditingController();
   TimePeriod _selectedPeriod = TimePeriod.last;
   DateTime _selectedDate = DateTime.now();
@@ -91,11 +91,11 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     decoration: InputDecoration(
                       labelText: 'Reading',
-                      suffixText: 'kWh',
+                      suffixText: 'm³',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Colors.amber, width: 2),
+                        borderSide: const BorderSide(color: Colors.orange, width: 2),
                       ),
                     ),
                   ),
@@ -104,7 +104,7 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
                     contentPadding: EdgeInsets.zero,
                     title: const Text("Date of Reading"),
                     subtitle: Text("${editDate.toLocal()}".split(' ')[0]),
-                    leading: const Icon(Icons.calendar_today, color: Colors.amber),
+                    leading: const Icon(Icons.calendar_today, color: Colors.orange),
                     onTap: () async {
                       final picked = await showDatePicker(
                         context: context,
@@ -126,8 +126,8 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.amber,
-                    foregroundColor: Colors.black87,
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
                   ),
                   onPressed: () async {
                     final newValue = double.tryParse(editController.text);
@@ -152,12 +152,13 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const themeColor = Colors.amber;
+    const themeColor = Colors.orange;
+    const unit = 'm³';
     final database = Provider.of<AppDatabase>(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Electricity Details'),
+        title: const Text('Gas Details'),
         backgroundColor: themeColor.withValues(alpha: 0.2),
         elevation: 0,
       ),
@@ -188,7 +189,7 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(color: themeColor, width: 2),
                     ),
-                    suffixText: 'kWh',
+                    suffixText: unit,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -222,7 +223,7 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: themeColor,
-                    foregroundColor: Colors.black87,
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -233,7 +234,7 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
                     if (value == null) return;
 
                     final validator = ValidationService(dbService: database);
-                    final result = await validator.validateEntry(value, MeterCategory.electricity);
+                    final result = await validator.validateEntry(value, MeterCategory.gas); 
 
                     if (result.status == ValidationStatus.errorLowerThanPrevious) {
                       if (mounted) {
@@ -250,7 +251,7 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
                     await database.into(database.meterEntries).insert(
                           MeterEntriesCompanion.insert(
                             value: value,
-                            category: MeterCategory.electricity,
+                            category: MeterCategory.gas,
                             timestamp: drift.Value(_selectedDate),
                           ),
                         );
@@ -272,7 +273,7 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
           Expanded(
             child: StreamBuilder<List<MeterEntry>>(
               stream: (database.select(database.meterEntries)
-                    ..where((t) => t.category.equals(MeterCategory.electricity.index))
+                    ..where((t) => t.category.equals(MeterCategory.gas.index))
                     ..orderBy([(t) => drift.OrderingTerm(expression: t.timestamp, mode: drift.OrderingMode.desc)]))
                   .watch(),
               builder: (context, snapshot) {
@@ -332,7 +333,7 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        '${_calculateValue(entries)} kWh',
+                                        '${_calculateValue(entries)} $unit',
                                         style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                                       ),
                                     ],
@@ -401,9 +402,9 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
                                       onTap: () => _showEditDialog(context, entry, database),
                                       leading: CircleAvatar(
                                         backgroundColor: themeColor.withValues(alpha: 0.2),
-                                        child: const Icon(Icons.bolt, color: themeColor),
+                                        child: const Icon(Icons.local_fire_department, color: themeColor),
                                       ),
-                                      title: Text('${entry.value.toStringAsFixed(1)} kWh'),
+                                      title: Text('${entry.value.toStringAsFixed(1)} $unit'),
                                       subtitle: Text(
                                         '${entry.timestamp.year}-${entry.timestamp.month.toString().padLeft(2, '0')}-${entry.timestamp.day.toString().padLeft(2, '0')}',
                                       ),

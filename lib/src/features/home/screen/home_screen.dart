@@ -1,4 +1,5 @@
 import 'package:flow_log/src/features/ElectricityDetail/screen/electricity_detail_screen.dart';
+import 'package:flow_log/src/features/GasDetail/screen/gas_detail_screen.dart';
 import 'package:flutter/material.dart';
 import '../widgets/big_menu_button.dart';
 
@@ -8,10 +9,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('FlowLog'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('FlowLog'), centerTitle: true),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -38,19 +36,38 @@ class HomeScreen extends StatelessWidget {
                   },
                 ),
                 BigMenuButton(
-                  icon: const Icon(Icons.local_fire_department, size: 48, color: Colors.orangeAccent),
+                  icon: const Icon(
+                    Icons.local_fire_department,
+                    size: 48,
+                    color: Colors.orangeAccent,
+                  ),
                   label: 'Gas',
                   color: Colors.orangeAccent.withValues(alpha: 0.1),
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const GasDetailScreen(),
+                      ),
+                    );
+                  },
                 ),
                 BigMenuButton(
-                  icon: const Icon(Icons.water_drop, size: 48, color: Colors.blue),
+                  icon: const Icon(
+                    Icons.water_drop,
+                    size: 48,
+                    color: Colors.blue,
+                  ),
                   label: 'Cold Water',
                   color: Colors.blue.withValues(alpha: 0.1),
                   onTap: () {},
                 ),
                 BigMenuButton(
-                  icon: const Icon(Icons.hot_tub, size: 48, color: Colors.redAccent),
+                  icon: const Icon(
+                    Icons.hot_tub,
+                    size: 48,
+                    color: Colors.redAccent,
+                  ),
                   label: 'Hot Water',
                   color: Colors.redAccent.withValues(alpha: 0.1),
                   onTap: () {},
