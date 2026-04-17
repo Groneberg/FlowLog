@@ -23,11 +23,8 @@ class FlowLogApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'FlowLog Debug',
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        primarySwatch: Colors.blue,
-      ),
+      title: 'FlowLog Debug-Modus',
+      theme: ThemeData(brightness: Brightness.dark, primarySwatch: Colors.blue),
       home: const HomeScreen(),
     );
   }
@@ -44,12 +41,25 @@ class _TestDataScreenState extends State<TestDataScreen> {
   final _controller = TextEditingController();
   MeterCategory _selectedCategory = MeterCategory.electricity;
 
+  String _categoryLabel(MeterCategory category) {
+    switch (category) {
+      case MeterCategory.electricity:
+        return 'Strom';
+      case MeterCategory.coldWater:
+        return 'Kaltwasser';
+      case MeterCategory.hotWater:
+        return 'Warmwasser';
+      case MeterCategory.gas:
+        return 'Gas';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final database = Provider.of<AppDatabase>(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('FlowLog DB Test')),
+      appBar: AppBar(title: const Text('FlowLog Datenbank-Test')),
       body: Column(
         children: [
           Padding(
@@ -60,9 +70,15 @@ class _TestDataScreenState extends State<TestDataScreen> {
                   child: DropdownButton<MeterCategory>(
                     value: _selectedCategory,
                     isExpanded: true,
-                    onChanged: (val) => setState(() => _selectedCategory = val!),
+                    onChanged: (val) =>
+                        setState(() => _selectedCategory = val!),
                     items: MeterCategory.values
-                        .map((c) => DropdownMenuItem(value: c, child: Text(c.name)))
+                        .map(
+                          (c) => DropdownMenuItem(
+                            value: c,
+                            child: Text(_categoryLabel(c)),
+                          ),
+                        )
                         .toList(),
                   ),
                 ),
@@ -81,11 +97,15 @@ class _TestDataScreenState extends State<TestDataScreen> {
                     if (val == null) return;
 
                     final validator = ValidationService(dbService: database);
-                    final result = await validator.validateEntry(val, _selectedCategory);
+                    final result = await validator.validateEntry(
+                      val,
+                      _selectedCategory,
+                    );
 
                     if (!mounted) return;
 
-                    if (result.status == ValidationStatus.errorLowerThanPrevious) {
+                    if (result.status ==
+                        ValidationStatus.errorLowerThanPrevious) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(result.message!),
@@ -95,7 +115,8 @@ class _TestDataScreenState extends State<TestDataScreen> {
                       return;
                     }
 
-                    if (result.status == ValidationStatus.warningExtremelyHigh) {
+                    if (result.status ==
+                        ValidationStatus.warningExtremelyHigh) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(result.message!),
@@ -104,7 +125,9 @@ class _TestDataScreenState extends State<TestDataScreen> {
                       );
                     }
 
-                    await database.into(database.meterEntries).insert(
+                    await database
+                        .into(database.meterEntries)
+                        .insert(
                           MeterEntriesCompanion.insert(
                             value: val,
                             category: _selectedCategory,
@@ -119,8 +142,10 @@ class _TestDataScreenState extends State<TestDataScreen> {
             ),
           ),
           const Divider(),
-          const Text("DB Inhalt (Live Stream):",
-              style: TextStyle(fontWeight: FontWeight.bold)),
+          const Text(
+            "DB Inhalt (Live Stream):",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           Expanded(
             child: StreamBuilder<List<MeterEntry>>(
               stream: database.select(database.meterEntries).watch(),
@@ -136,7 +161,7 @@ class _TestDataScreenState extends State<TestDataScreen> {
                     final e = entries[index];
                     return ListTile(
                       leading: Icon(_getIcon(e.category)),
-                      title: Text("${e.value} ${e.category.name}"),
+                      title: Text("${e.value} ${_categoryLabel(e.category)}"),
                       subtitle: Text(e.timestamp.toIso8601String()),
                       trailing: IconButton(
                         icon: const Icon(Icons.delete, size: 18),
@@ -158,9 +183,9 @@ class _TestDataScreenState extends State<TestDataScreen> {
     switch (cat) {
       case MeterCategory.electricity:
         return Icons.bolt;
-      case MeterCategory.waterCold:
+      case MeterCategory.coldWater:
         return Icons.water_drop;
-      case MeterCategory.waterWarm:
+      case MeterCategory.hotWater:
         return Icons.hot_tub;
       case MeterCategory.gas:
         return Icons.local_fire_department;

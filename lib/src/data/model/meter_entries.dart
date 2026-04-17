@@ -18,4 +18,9 @@ class MeterEntries extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-enum MeterCategory { electricity, gas, waterCold, waterWarm }
+enum MeterCategory {
+  electricity,
+  gas,
+  coldWater, // Neu für Kaltwasser
+  hotWater,  // Neu für Warmwasser
+}

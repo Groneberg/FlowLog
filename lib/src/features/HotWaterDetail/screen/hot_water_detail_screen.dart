@@ -7,15 +7,14 @@ import '../../../data/model/meter_entries.dart';
 
 enum TimePeriod { last, day, week, month, year }
 
-class ElectricityDetailScreen extends StatefulWidget {
-  const ElectricityDetailScreen({super.key});
+class HotWaterDetailScreen extends StatefulWidget {
+  const HotWaterDetailScreen({super.key});
 
   @override
-  State<ElectricityDetailScreen> createState() =>
-      _ElectricityDetailScreenState();
+  State<HotWaterDetailScreen> createState() => _HotWaterDetailScreenState();
 }
 
-class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
+class _HotWaterDetailScreenState extends State<HotWaterDetailScreen> {
   final _controller = TextEditingController();
   TimePeriod _selectedPeriod = TimePeriod.last;
   DateTime _selectedDate = DateTime.now();
@@ -30,7 +29,7 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
     if (entries.length < 2) return '--';
 
     if (_selectedPeriod == TimePeriod.last) {
-      return (entries[0].value - entries[1].value).toStringAsFixed(1);
+      return (entries[0].value - entries[1].value).toStringAsFixed(3);
     }
 
     final newest = entries.first;
@@ -61,7 +60,7 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
         return '';
     }
 
-    return (dailyAverage * multiplier).toStringAsFixed(1);
+    return (dailyAverage * multiplier).toStringAsFixed(3);
   }
 
   String _getPeriodLabel() {
@@ -93,7 +92,7 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text('Eintrag bearbeiten'),
+              title: const Text('Warmwasser-Eintrag bearbeiten'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -104,14 +103,14 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
                     ),
                     decoration: InputDecoration(
                       labelText: 'Zählerstand',
-                      suffixText: 'kWh',
+                      suffixText: 'm³',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: const BorderSide(
-                          color: Colors.amber,
+                          color: Colors.redAccent,
                           width: 2,
                         ),
                       ),
@@ -124,7 +123,7 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
                     subtitle: Text("${editDate.toLocal()}".split(' ')[0]),
                     leading: const Icon(
                       Icons.calendar_today,
-                      color: Colors.amber,
+                      color: Colors.redAccent,
                     ),
                     onTap: () async {
                       final picked = await showDatePicker(
@@ -150,8 +149,8 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.amber,
-                    foregroundColor: Colors.black87,
+                    backgroundColor: Colors.redAccent,
+                    foregroundColor: Colors.white,
                   ),
                   onPressed: () async {
                     final newValue = double.tryParse(editController.text);
@@ -178,12 +177,12 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const themeColor = Colors.amber;
+    const themeColor = Colors.redAccent;
     final database = Provider.of<AppDatabase>(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Stromdetails'),
+        title: const Text('Warmwasserdetails'),
         backgroundColor: themeColor.withValues(alpha: 0.2),
         elevation: 0,
       ),
@@ -216,7 +215,7 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(color: themeColor, width: 2),
                     ),
-                    suffixText: 'kWh',
+                    suffixText: 'm³',
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -254,7 +253,7 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: themeColor,
-                    foregroundColor: Colors.black87,
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -267,7 +266,7 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
                     final validator = ValidationService(dbService: database);
                     final result = await validator.validateEntry(
                       value,
-                      MeterCategory.electricity,
+                      MeterCategory.hotWater,
                     );
 
                     if (result.status ==
@@ -288,7 +287,7 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
                         .insert(
                           MeterEntriesCompanion.insert(
                             value: value,
-                            category: MeterCategory.electricity,
+                            category: MeterCategory.hotWater,
                             timestamp: drift.Value(_selectedDate),
                           ),
                         );
@@ -312,9 +311,8 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
               stream:
                   (database.select(database.meterEntries)
                         ..where(
-                          (t) => t.category.equals(
-                            MeterCategory.electricity.index,
-                          ),
+                          (t) =>
+                              t.category.equals(MeterCategory.hotWater.index),
                         )
                         ..orderBy([
                           (t) => drift.OrderingTerm(
@@ -403,7 +401,7 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        '${_calculateValue(entries)} kWh',
+                                        '${_calculateValue(entries)} m³',
                                         style: const TextStyle(
                                           fontSize: 28,
                                           fontWeight: FontWeight.bold,
@@ -469,29 +467,15 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
                                       await database
                                           .delete(database.meterEntries)
                                           .delete(entry);
-
-                                      if (!context.mounted) return;
-
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).clearSnackBars();
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: const Text(
-                                            'Eintrag gelöscht',
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Eintrag gelöscht'),
                                           ),
-                                          action: SnackBarAction(
-                                            label: 'Rückgängig',
-                                            onPressed: () async {
-                                              await database
-                                                  .into(database.meterEntries)
-                                                  .insert(entry);
-                                            },
-                                          ),
-                                        ),
-                                      );
+                                        );
+                                      }
                                     },
                                     child: ListTile(
                                       contentPadding: EdgeInsets.zero,
@@ -505,20 +489,20 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
                                           alpha: 0.2,
                                         ),
                                         child: const Icon(
-                                          Icons.bolt_rounded,
+                                          Icons.waves_rounded,
                                           color: themeColor,
                                           size: 20,
                                         ),
                                       ),
                                       title: Text(
-                                        '${entry.value.toStringAsFixed(1)} kWh',
+                                        '${entry.value.toStringAsFixed(3)} m³',
                                       ),
                                       subtitle: Text(
                                         '${entry.timestamp.year}-${entry.timestamp.month.toString().padLeft(2, '0')}-${entry.timestamp.day.toString().padLeft(2, '0')}',
                                       ),
                                       trailing: Text(
                                         diff != null
-                                            ? '+ ${diff.toStringAsFixed(1)}'
+                                            ? '+ ${diff.toStringAsFixed(3)}'
                                             : 'Anfang',
                                         style: const TextStyle(
                                           fontWeight: FontWeight.bold,
