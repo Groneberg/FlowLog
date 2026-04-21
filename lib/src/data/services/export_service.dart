@@ -4,6 +4,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'database_service.dart';
 
+import 'dart:developer';
+
+
 class ExportService {
   final AppDatabase database;
 
@@ -13,7 +16,7 @@ class ExportService {
     final allEntries = await database.select(database.meterEntries).get();
 
     List<List<dynamic>> rows = [
-      ["ID", "Datum", "Kategorie", "Zählerstand", "Notiz"],
+      ["id", "timestamp", "category", "value", "note"],
     ];
 
     for (var entry in allEntries) {
@@ -26,9 +29,9 @@ class ExportService {
       ]);
     }
 
-    String csvData = const ListToCsvConverter(
-      fieldDelimiter: ';',
-    ).convert(rows);
+    String csvData = "sep=,\n${const ListToCsvConverter(fieldDelimiter: ',').convert(rows)}";
+
+    log(csvData);
 
     final directory = await getTemporaryDirectory();
     final file = File(
