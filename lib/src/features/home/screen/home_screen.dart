@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../data/services/database_service.dart';
 import '../../../data/services/export_service.dart';
+import '../../../data/services/import_service.dart';
 import '../widgets/big_menu_button.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -44,12 +45,42 @@ class HomeScreen extends StatelessWidget {
         title: const Text('FlowLog'),
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.download_outlined),
-            onPressed: () => _handleExport(context),
-            tooltip: 'Daten exportieren',
-          ),
-        ],
+    IconButton(
+      icon: const Icon(Icons.file_download_outlined),
+      tooltip: 'Daten importieren',
+      onPressed: () async {
+        try {
+          final database = Provider.of<AppDatabase>(context, listen: false);
+          final importService = ImportService(database);
+          
+          final count = await importService.importDataFromCsv();
+          
+          if (context.mounted && count > 0) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('$count Einträge erfolgreich importiert!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        } catch (e) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Fehler beim Import: $e'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      },
+    ),
+    IconButton(
+      icon: const Icon(Icons.file_upload_outlined),
+      tooltip: 'Daten exportieren',
+      onPressed: () => _handleExport(context),
+    ),
+  ],
       ),
       body: Center(
         child: Padding(
