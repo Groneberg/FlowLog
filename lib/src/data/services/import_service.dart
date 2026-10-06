@@ -52,7 +52,8 @@ class ImportService {
           orElse: () => MeterCategory.electricity,
         );
 
-        final value = double.parse(row[3].toString());
+        final sanitizedValue = row[3].toString().trim().replaceAll(',', '.');
+        final value = double.parse(sanitizedValue);
         final note = row.length > 4 ? row[4].toString() : null;
 
         await database
@@ -68,7 +69,7 @@ class ImportService {
             );
         importedCount++;
       } catch (e) {
-        debugPrint('Fehler bei Zeile $row: $e');
+        debugPrint('Error importing row $row: $e');
       }
     }
 
