@@ -467,15 +467,29 @@ class _ColdWaterDetailScreenState extends State<ColdWaterDetailScreen> {
                                       await database
                                           .delete(database.meterEntries)
                                           .delete(entry);
-                                      if (mounted) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text('Eintrag gelöscht'),
+
+                                      if (!context.mounted) return;
+
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).clearSnackBars();
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: const Text(
+                                            'Eintrag gelöscht',
                                           ),
-                                        );
-                                      }
+                                          action: SnackBarAction(
+                                            label: 'Rückgängig',
+                                            onPressed: () async {
+                                              await database
+                                                  .into(database.meterEntries)
+                                                  .insert(entry);
+                                            },
+                                          ),
+                                        ),
+                                      );
                                     },
                                     child: ListTile(
                                       contentPadding: EdgeInsets.zero,

@@ -24,6 +24,7 @@ class FlowLogApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'FlowLog Debug-Modus',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(brightness: Brightness.dark, primarySwatch: Colors.blue),
       home: const HomeScreen(),
     );
