@@ -339,8 +339,8 @@ class _ColdWaterDetailScreenState extends State<ColdWaterDetailScreen> {
 
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: ListView(
+                    padding: const EdgeInsets.only(bottom: 24),
                     children: [
                       const SizedBox(height: 24),
                       Card(
@@ -447,100 +447,83 @@ class _ColdWaterDetailScreenState extends State<ColdWaterDetailScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      Expanded(
-                        child: entries.isEmpty
-                            ? const Center(child: Text('Noch keine Einträge'))
-                            : ListView.separated(
-                                itemCount: entries.length,
-                                separatorBuilder: (context, index) =>
-                                    const Divider(),
-                                itemBuilder: (context, index) {
-                                  final entry = entries[index];
-                                  double? diff;
-                                  if (index + 1 < entries.length) {
-                                    diff =
-                                        entry.value - entries[index + 1].value;
-                                  }
+                      if (entries.isEmpty)
+                        const Center(child: Text('Noch keine Einträge'))
+                      else
+                        ...entries.asMap().entries.map((entryWithIndex) {
+                          final entry = entryWithIndex.value;
+                          final index = entryWithIndex.key;
+                          double? diff;
+                          if (index + 1 < entries.length) {
+                            diff = entry.value - entries[index + 1].value;
+                          }
 
-                                  return Dismissible(
-                                    key: ValueKey(entry.id),
-                                    direction: DismissDirection.endToStart,
-                                    background: Container(
-                                      alignment: Alignment.centerRight,
-                                      padding: const EdgeInsets.only(
-                                        right: 20.0,
-                                      ),
-                                      color: Colors.red.withValues(alpha: 0.8),
-                                      child: const Icon(
-                                        Icons.delete,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    onDismissed: (direction) async {
-                                      await database
-                                          .delete(database.meterEntries)
-                                          .delete(entry);
-
-                                      if (!context.mounted) return;
-
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).clearSnackBars();
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: const Text(
-                                            'Eintrag gelöscht',
-                                          ),
-                                          action: SnackBarAction(
-                                            label: 'Rückgängig',
-                                            onPressed: () async {
-                                              await database
-                                                  .into(database.meterEntries)
-                                                  .insert(entry);
-                                            },
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    child: ListTile(
-                                      contentPadding: EdgeInsets.zero,
-                                      onTap: () => _showEditDialog(
-                                        context,
-                                        entry,
-                                        database,
-                                      ),
-                                      leading: CircleAvatar(
-                                        backgroundColor: themeColor.withValues(
-                                          alpha: 0.2,
-                                        ),
-                                        child: const Icon(
-                                          Icons.water_drop_rounded,
-                                          color: themeColor,
-                                          size: 20,
-                                        ),
-                                      ),
-                                      title: Text(
-                                        '${entry.value.toStringAsFixed(3)} m³',
-                                      ),
-                                      subtitle: Text(
-                                        '${entry.timestamp.year}-${entry.timestamp.month.toString().padLeft(2, '0')}-${entry.timestamp.day.toString().padLeft(2, '0')}',
-                                      ),
-                                      trailing: Text(
-                                        diff != null
-                                            ? '+ ${diff.toStringAsFixed(3)}'
-                                            : 'Anfang',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.grey,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
+                          return Dismissible(
+                            key: ValueKey(entry.id),
+                            direction: DismissDirection.endToStart,
+                            background: Container(
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.only(right: 20.0),
+                              color: Colors.red.withValues(alpha: 0.8),
+                              child: const Icon(
+                                Icons.delete,
+                                color: Colors.white,
                               ),
-                      ),
+                            ),
+                            onDismissed: (direction) async {
+                              await database
+                                  .delete(database.meterEntries)
+                                  .delete(entry);
+
+                              if (!context.mounted) return;
+
+                              ScaffoldMessenger.of(context).clearSnackBars();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text('Eintrag gelöscht'),
+                                  action: SnackBarAction(
+                                    label: 'Rückgängig',
+                                    onPressed: () async {
+                                      await database
+                                          .into(database.meterEntries)
+                                          .insert(entry);
+                                    },
+                                  ),
+                                ),
+                              );
+                            },
+                            child: ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              onTap: () =>
+                                  _showEditDialog(context, entry, database),
+                              leading: CircleAvatar(
+                                backgroundColor: themeColor.withValues(
+                                  alpha: 0.2,
+                                ),
+                                child: const Icon(
+                                  Icons.water_drop_rounded,
+                                  color: themeColor,
+                                  size: 20,
+                                ),
+                              ),
+                              title: Text(
+                                '${entry.value.toStringAsFixed(3)} m³',
+                              ),
+                              subtitle: Text(
+                                '${entry.timestamp.year}-${entry.timestamp.month.toString().padLeft(2, '0')}-${entry.timestamp.day.toString().padLeft(2, '0')}',
+                              ),
+                              trailing: Text(
+                                diff != null
+                                    ? '+ ${diff.toStringAsFixed(3)}'
+                                    : 'Anfang',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
                     ],
                   ),
                 );
