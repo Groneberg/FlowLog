@@ -1,4 +1,4 @@
-# 📊 EnergyFlow
+# 📊 FlowLog
 
 [![Flutter Version](https://img.shields.io/badge/Flutter-%2302569B.svg?style=for-the-badge&logo=Flutter&logoColor=white)](https://flutter.dev)
 [![Database: Drift](https://img.shields.io/badge/Database-Drift-%23414141.svg?style=for-the-badge)](https://drift.simonbinder.eu/)
@@ -38,12 +38,11 @@ The development follows strict principles to optimally support the user in contr
 
 ### ✨ Features (MVP)
 
-* **Resource Tracking:** Dedicated, modular tracking for electricity (kWh), gas (m³), and water (m³)[cite: 2].
-* **Hybrid Analysis:** Real-time comparison to previous entries alongside automated projections for day, week, month, and year[cite: 2].
-* **Smart Conversion:** Automatic conversion of gas volumes (m³) into billing-relevant kWh using user-defined calorific values and state numbers[cite: 2].
-* **Full CRUD Operations:** Flexible creation, reading, editing, and deletion with precise back-dating support[cite: 2].
-* **Reactive & Smart UI:** Smooth swipe-to-delete behavior with undo function and reactive list updates via streams[cite: 2].
-
+* **4-Resource Tracking:** Dedicated, modular tracking for Electricity (`kWh`), Gas (`m³`), Cold Water (`m³`), and Hot Water (`m³`).
+* **Hybrid Analysis:** Real-time calculation of consumption since the last reading alongside projected averages for Day, Week, Month, and Year.
+* **Two-Tier Validation ("The Guardian"):** Hard stop against entries lower than previous readings for the selected date, plus soft warnings for high consumption spikes.
+* **Full CRUD & Smart UI:** Swipe-to-delete with undo action, tap-to-edit with date picker, and scrollable entry views preventing keyboard overflows.
+* **Data Sovereignty (Settings Module):** Strategy-based CSV/JSON export and resilient import with transactional disaster recovery and safety confirmation dialog.
 ---
 
 ### 🎨 UI Design & Color Palette
@@ -52,11 +51,11 @@ To provide intuitive differentiation between energy sources, the app uses a clea
 
 | Visual Accent | Color Name | Hex Code | Purpose & Application |
 | :--- | :--- | :--- | :--- |
-| ⚡ **Electricity** | Electric Gold | `#FFC107` | Symbolizes energy and light for electrical metrics. |
-| 🔥 **Gas** | Gas Orange | `#FF9800` | Symbolizes heat and combustion for the gas module. |
-| 💧 **Water** | Water Blue | `#2196F3` | Clear, refreshing representation for water resources. |
+| ⚡ **Electricity** | Electric Amber | `#FFC107` | Symbolizes energy and light for electrical metrics (`kWh`). |
+| 🔥 **Gas** | Gas Orange | `#FF9800` | Symbolizes heat and combustion for the gas module (`m³`). |
+| 💧 **Cold Water** | Water Blue | `#2196F3` | Clear representation for cold water resources (`m³`). |
+| ♨️ **Hot Water** | Thermal Red | `#FF5252` | Distinct accent for hot water and thermal resources (`m³`). |
 | 🌑 **Background** | Deep Black | `#121212` | Modern Dark Theme for high readability and focus. |
-
 ---
 
 ### 🛠️ Tech Stack
@@ -78,7 +77,7 @@ flutter pub get
 #### 2. Trigger Code Generation
 Drift relies on code generation to maintain the reactive database layer[cite: 2].
 ```bash
-flutter pub run build_runner build --delete-conflicting-outputs
+dart run build_runner build --delete-conflicting-outputs
 ```
 
 #### 3. Launch the Application
@@ -111,12 +110,11 @@ Drift uses native SQLite bindings. Ensure your `pubspec.yaml` contains the corre
 
 ### 🔮 Roadmap
 
-* [ ] **Contract & Cost Profiles:** Input of unit prices, base fees, and monthly payments for exact budget forecasting.
-* [ ] **OCR Camera Scan:** Automated meter reading recognition using the device camera.
-* [ ] **Dashboard Widgets:** Key performance indicators and target/actual status directly on the launch screen.
-* [ ] **Export Function:** CSV and PDF generation for landlord or utility provider settlement.
-* [ ] **Visual Trends:** Implementation of charts and graphs for long-term consumption analysis.
-
+* [ ] **Contract & Cost Profiles (Phase 2):** Input of unit prices, base fees, and monthly payments for exact budget forecasting.
+* [ ] **Thermodynamic Gas Conversion:** Calculation of kWh from m³ via calorific value and state number (DVGW G 685).
+* [ ] **Visual Trends & Charts (Phase 3):** Line and bar charts (`fl_chart`) for long-term consumption trends.
+* [ ] **Basement UX & Accessibility:** Flashlight toggle in entry forms, haptics, and BFSG compliance.
+* [ ] **OCR Camera Scan (Phase 4):** Automated meter reading recognition using on-device ML.
 ---
 
 *Developed as a Flutter Showcase Project.*
@@ -152,12 +150,11 @@ Die Entwicklung folgt strengen Prinzipien, um den Nutzer optimal bei der Kontrol
 
 ### ✨ Features (MVP)
 
-* **Ressourcen-Tracking:** Separate Module für Strom (kWh), Gas (m³) und Wasser (m³)[cite: 2].
-* **Hybride Analyse:** Direkter Vergleich zum letzten Eintrag sowie Hochrechnungen für Tag, Woche, Monat und Jahr[cite: 2].
-* **Smarte Umrechnung:** Automatische Berechnung von Gas (m³) in abrechnungsrelevante kWh mittels Brennwert und Zustandszahl[cite: 2].
-* **CRUD-Operationen:** Vollständiges Erstellen, Lesen, Bearbeiten und Löschen von Einträgen mit flexibler Datumswahl für präzises Nachtragen[cite: 2].
-* **Smart UI:** Swipe-to-Delete mit Undo-Funktion und reaktive Listen-Updates via Streams[cite: 2].
-
+* **4-Sparten-Tracking:** Eigenständige Module für Strom (`kWh`), Gas (`m³`), Kaltwasser (`m³`) und Warmwasser (`m³`).
+* **Hybride Analyse:** Direkter Vergleich zum letzten Eintrag sowie Hochrechnungen für Tag, Woche, Monat und Jahr.
+* **Zweistufige Validierung („The Guardian“):** Verhindert Zählerstandsrückgänge zum gewählten Messdatum und warnt vor extremen Verbrauchssprüngen.
+* **Vollständige CRUD-Bedienung:** Swipe-to-Delete mit Undo-Funktion, Tap-to-Edit mit Datumswahl und tastatur-optimierte Scrollansichten.
+* **Datensouveränität (Einstellungsmodul):** CSV- und JSON-Export via Strategy Pattern sowie fehlertoleranter Import mit transaktionalem Restore und Sicherheitsabfrage.
 ---
 
 ### 🎨 UI-Design & Farbpalette
@@ -166,11 +163,11 @@ Die Anwendung nutzt ein klares Farbschema zur intuitiven Unterscheidung der Ener
 
 | Visueller Akzent | Farbname | Hex-Code | Funktion & Anwendung |
 | :--- | :--- | :--- | :--- |
-| ⚡ **Strom** | Electric Gold | `#FFC107` | Fokus auf Energie und Licht für den Strom-Bereich. |
-| 🔥 **Gas** | Gas Orange | `#FF9800` | Symbolisiert Wärme und Verbrennung für das Gas-Modul. |
-| 💧 **Wasser** | Water Blue | `#2196F3` | Klare Darstellung für die Wasser-Ressourcen. |
+| ⚡ **Strom** | Electric Amber | `#FFC107` | Fokus auf Energie und Licht für den Strom-Bereich (`kWh`). |
+| 🔥 **Gas** | Gas Orange | `#FF9800` | Symbolisiert Wärme und Verbrennung für das Gas-Modul (`m³`). |
+| 💧 **Kaltwasser** | Water Blue | `#2196F3` | Klare Darstellung für die Kaltwasser-Ressourcen (`m³`). |
+| ♨️ **Warmwasser** | Thermal Red | `#FF5252` | Eigenständiger Akzent für Warmwasser und thermische Energie (`m³`). |
 | 🌑 **Hintergrund** | Deep Black | `#121212` | Modernes Dark-Theme für maximale Übersicht. |
-
 ---
 
 ### 🛠️ Technologie-Stack
@@ -194,7 +191,7 @@ flutter pub get
 #### 2. Datenbank-Modelle generieren
 Da Drift Code-Generierung nutzt, muss der Build-Runner ausgeführt werden:
 ```bash
-flutter pub run build_runner build --delete-conflicting-outputs
+dart run build_runner --delete-conflicting-outputs
 ```
 
 #### 3. Anwendung starten
@@ -227,11 +224,10 @@ Prüfe, ob alle notwendigen `sqlite3`-Abhängigkeiten in deiner `pubspec.yaml` v
 
 ### 🔮 Roadmap
 
-* [ ] **Vertrags- & Kostenprofile:** Hinterlegen von Arbeitspreis, Grundgebühr und monatlichen Abschlägen zur exakten Budgetberechnung.
-* [ ] **OCR-Kamera-Scan:** Automatische Zählerstandserkennung per Smartphone-Kamera zur Fehlervermeidung.
-* [ ] **Dashboard-Widgets:** Die wichtigsten Durchschnitte und der Soll-Ist-Status direkt auf dem Startbildschirm.
-* [ ] **Export-Funktion:** CSV- und PDF-Export für die Nebenkostenabrechnung oder den Vermieter.
-* [ ] **Visuelle Trends:** Implementierung von Diagrammen und Graphen für langfristige Analysen.
-
+* [ ] **Vertrags- & Kostenprofile (Phase 2):** Hinterlegen von Arbeitspreis, Grundgebühr und monatlichen Abschlägen zur Budgetberechnung.
+* [ ] **Thermodynamische Gasumrechnung:** Automatische Berechnung von m³ in kWh mittels Brennwert und Zustandszahl (DVGW G 685).
+* [ ] **Visuelle Trends (Phase 3):** Diagramme und Graphen (`fl_chart`) für langfristige Verbrauchsanalysen.
+* [ ] **Keller-UX & Barrierefreiheit:** Integrierter Taschenlampen-Schalter, Haptik-Feedback und BFSG-Konformität.
+* [ ] **OCR-Kamera-Scan (Phase 4):** Automatische Zählerstandserkennung per Smartphone-Kamera via On-Device-Erkennung.
 ---
 *Entwickelt als Flutter Showcase Projekt.*
