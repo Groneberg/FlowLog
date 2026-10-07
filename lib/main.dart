@@ -1,17 +1,27 @@
 import 'package:flow_log/src/data/services/database_service.dart';
-import 'package:flow_log/src/data/services/validation_service.dart';
+import 'package:flow_log/src/data/services/export_service.dart';
+import 'package:flow_log/src/data/services/import_service.dart';
 import 'package:flow_log/src/features/Home/screen/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'src/data/model/meter_entries.dart';
 
 void main() {
   final database = AppDatabase();
 
   runApp(
-    Provider<AppDatabase>(
-      create: (context) => database,
-      dispose: (context, db) => db.close(),
+    MultiProvider(
+      providers: [
+        Provider<AppDatabase>(
+          create: (_) => database,
+          dispose: (_, db) => db.close(),
+        ),
+        ProxyProvider<AppDatabase, ExportService>(
+          update: (_, db, __) => ExportService(db),
+        ),
+        ProxyProvider<AppDatabase, ImportService>(
+          update: (_, db, __) => ImportService(db),
+        ),
+      ],
       child: const FlowLogApp(),
     ),
   );
@@ -23,173 +33,10 @@ class FlowLogApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'FlowLog Debug-Modus',
+      title: 'FlowLog',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(brightness: Brightness.dark, primarySwatch: Colors.blue),
       home: const HomeScreen(),
     );
-  }
-}
-
-class TestDataScreen extends StatefulWidget {
-  const TestDataScreen({super.key});
-
-  @override
-  State<TestDataScreen> createState() => _TestDataScreenState();
-}
-
-class _TestDataScreenState extends State<TestDataScreen> {
-  final _controller = TextEditingController();
-  MeterCategory _selectedCategory = MeterCategory.electricity;
-
-  String _categoryLabel(MeterCategory category) {
-    switch (category) {
-      case MeterCategory.electricity:
-        return 'Strom';
-      case MeterCategory.coldWater:
-        return 'Kaltwasser';
-      case MeterCategory.hotWater:
-        return 'Warmwasser';
-      case MeterCategory.gas:
-        return 'Gas';
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final database = Provider.of<AppDatabase>(context);
-
-    return Scaffold(
-      appBar: AppBar(title: const Text('FlowLog Datenbank-Test')),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: DropdownButton<MeterCategory>(
-                    value: _selectedCategory,
-                    isExpanded: true,
-                    onChanged: (val) =>
-                        setState(() => _selectedCategory = val!),
-                    items: MeterCategory.values
-                        .map(
-                          (c) => DropdownMenuItem(
-                            value: c,
-                            child: Text(_categoryLabel(c)),
-                          ),
-                        )
-                        .toList(),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Wert'),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.add_box, color: Colors.green),
-                  onPressed: () async {
-                    final val = double.tryParse(_controller.text);
-                    if (val == null) return;
-
-                    final validator = ValidationService(dbService: database);
-                    final result = await validator.validateEntry(
-                      val,
-                      _selectedCategory,
-                    );
-
-                    if (!mounted) return;
-
-                    if (result.status ==
-                        ValidationStatus.errorLowerThanPrevious) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(result.message!),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                      return;
-                    }
-
-                    if (result.status ==
-                        ValidationStatus.warningExtremelyHigh) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(result.message!),
-                          backgroundColor: Colors.orange,
-                        ),
-                      );
-                    }
-
-                    await database
-                        .into(database.meterEntries)
-                        .insert(
-                          MeterEntriesCompanion.insert(
-                            value: val,
-                            category: _selectedCategory,
-                          ),
-                        );
-
-                    _controller.clear();
-                    FocusManager.instance.primaryFocus?.unfocus();
-                  },
-                ),
-              ],
-            ),
-          ),
-          const Divider(),
-          const Text(
-            "DB Inhalt (Live Stream):",
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          Expanded(
-            child: StreamBuilder<List<MeterEntry>>(
-              stream: database.select(database.meterEntries).watch(),
-              builder: (context, snapshot) {
-                final entries = snapshot.data ?? [];
-                if (entries.isEmpty) {
-                  return const Center(child: Text("Keine Daten vorhanden"));
-                }
-
-                return ListView.builder(
-                  itemCount: entries.length,
-                  itemBuilder: (context, index) {
-                    final e = entries[index];
-                    return ListTile(
-                      leading: Icon(_getIcon(e.category)),
-                      title: Text("${e.value} ${_categoryLabel(e.category)}"),
-                      subtitle: Text(e.timestamp.toIso8601String()),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete, size: 18),
-                        onPressed: () =>
-                            database.delete(database.meterEntries).delete(e),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  IconData _getIcon(MeterCategory cat) {
-    switch (cat) {
-      case MeterCategory.electricity:
-        return Icons.bolt;
-      case MeterCategory.coldWater:
-        return Icons.water_drop;
-      case MeterCategory.hotWater:
-        return Icons.hot_tub;
-      case MeterCategory.gas:
-        return Icons.local_fire_department;
-    }
   }
 }

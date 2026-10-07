@@ -268,6 +268,7 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
                     final result = await validator.validateEntry(
                       value,
                       MeterCategory.electricity,
+                      entryDate: _selectedDate,
                     );
 
                     if (result.status ==
@@ -281,6 +282,18 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
                         );
                       }
                       return;
+                    }
+
+                    if (result.status ==
+                        ValidationStatus.warningExtremelyHigh) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(result.message!),
+                            backgroundColor: Colors.amber,
+                          ),
+                        );
+                      }
                     }
 
                     await database

@@ -267,6 +267,7 @@ class _ColdWaterDetailScreenState extends State<ColdWaterDetailScreen> {
                     final result = await validator.validateEntry(
                       value,
                       MeterCategory.coldWater,
+                      entryDate: _selectedDate,
                     );
 
                     if (result.status ==
@@ -280,6 +281,18 @@ class _ColdWaterDetailScreenState extends State<ColdWaterDetailScreen> {
                         );
                       }
                       return;
+                    }
+
+                    if (result.status ==
+                        ValidationStatus.warningExtremelyHigh) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(result.message!),
+                            backgroundColor: Colors.amber,
+                          ),
+                        );
+                      }
                     }
 
                     await database

@@ -267,6 +267,7 @@ class _HotWaterDetailScreenState extends State<HotWaterDetailScreen> {
                     final result = await validator.validateEntry(
                       value,
                       MeterCategory.hotWater,
+                      entryDate: _selectedDate,
                     );
 
                     if (result.status ==
@@ -280,6 +281,18 @@ class _HotWaterDetailScreenState extends State<HotWaterDetailScreen> {
                         );
                       }
                       return;
+                    }
+
+                    if (result.status ==
+                        ValidationStatus.warningExtremelyHigh) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(result.message!),
+                            backgroundColor: Colors.amber,
+                          ),
+                        );
+                      }
                     }
 
                     await database

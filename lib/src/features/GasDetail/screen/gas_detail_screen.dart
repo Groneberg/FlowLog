@@ -268,6 +268,7 @@ class _GasDetailScreenState extends State<GasDetailScreen> {
                     final result = await validator.validateEntry(
                       value,
                       MeterCategory.gas,
+                      entryDate: _selectedDate,
                     );
 
                     if (result.status ==
@@ -281,6 +282,18 @@ class _GasDetailScreenState extends State<GasDetailScreen> {
                         );
                       }
                       return;
+                    }
+
+                    if (result.status ==
+                        ValidationStatus.warningExtremelyHigh) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(result.message!),
+                            backgroundColor: Colors.amber,
+                          ),
+                        );
+                      }
                     }
 
                     await database
