@@ -9,23 +9,109 @@ import '../../../data/services/export_service.dart';
 import '../../../data/services/import_service.dart';
 import '../widgets/big_menu_button.dart';
 
+class SelectionSheet extends StatelessWidget {
+  const SelectionSheet({super.key, required this.onSelect});
+
+  final void Function(ExportStrategy strategy) onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(width: 48, child: Divider(thickness: 2)),
+            const SizedBox(height: 8),
+            const Text(
+              'Export auswählen',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            _ExportOption(
+              icon: Icons.table_chart_outlined,
+              title: 'Tabellendaten (CSV)',
+              subtitle: 'Für Excel, Tabellen und Auswertungen',
+              strategy: CsvExportStrategy(),
+              onSelect: onSelect,
+            ),
+            const SizedBox(height: 12),
+            _ExportOption(
+              icon: Icons.backup_outlined,
+              title: 'Vollständiges Backup (JSON)',
+              subtitle: 'Vollständige Datensicherung zur Wiederherstellung',
+              strategy: JsonExportStrategy(),
+              onSelect: onSelect,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ExportOption extends StatelessWidget {
+  const _ExportOption({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.strategy,
+    required this.onSelect,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final ExportStrategy strategy;
+  final void Function(ExportStrategy strategy) onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(title),
+      subtitle: Text(subtitle),
+      onTap: () => onSelect(strategy),
+    );
+  }
+}
+
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  HomeScreen({super.key});
+
+  final GlobalKey _exportButtonKey = GlobalKey();
 
   Future<void> _handleExport(BuildContext context) async {
-    try {
-      final database = Provider.of<AppDatabase>(context, listen: false);
-      final exportService = ExportService(database);
-      await exportService.exportAllDataToCsv();
+    final strategy = await showModalBottomSheet<ExportStrategy>(
+      context: context,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SelectionSheet(
+        onSelect: (selectedStrategy) {
+          Navigator.of(context).pop(selectedStrategy);
+        },
+      ),
+    );
 
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Daten werden exportiert...'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
+    if (strategy == null || !context.mounted) return;
+
+    final database = Provider.of<AppDatabase>(context, listen: false);
+    final exportService = ExportService(database);
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Daten werden exportiert...'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+
+    try {
+      await exportService.exportData(context: context, strategy: strategy);
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -45,42 +131,51 @@ class HomeScreen extends StatelessWidget {
         title: const Text('FlowLog'),
         centerTitle: true,
         actions: [
-    IconButton(
-      icon: const Icon(Icons.file_download_outlined),
-      tooltip: 'Daten importieren',
-      onPressed: () async {
-        try {
-          final database = Provider.of<AppDatabase>(context, listen: false);
-          final importService = ImportService(database);
-          
-          final count = await importService.importDataFromCsv();
-          
-          if (context.mounted && count > 0) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('$count Einträge erfolgreich importiert!'),
-                backgroundColor: Colors.green,
-              ),
-            );
-          }
-        } catch (e) {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Fehler beim Import: $e'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        }
-      },
-    ),
-    IconButton(
-      icon: const Icon(Icons.file_upload_outlined),
-      tooltip: 'Daten exportieren',
-      onPressed: () => _handleExport(context),
-    ),
-  ],
+          IconButton(
+            icon: const Icon(Icons.file_download_outlined),
+            tooltip: 'Daten importieren',
+            onPressed: () async {
+              try {
+                final database = Provider.of<AppDatabase>(
+                  context,
+                  listen: false,
+                );
+                final importService = ImportService(database);
+
+                final count = await importService.importDataFromCsv();
+
+                if (context.mounted && count > 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('$count Einträge erfolgreich importiert!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Fehler beim Import: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+          ),
+          IconButton(
+            key: _exportButtonKey,
+            icon: const Icon(Icons.file_upload_outlined),
+            tooltip: 'Daten exportieren',
+            onPressed: () {
+              final buttonContext = _exportButtonKey.currentContext;
+              if (buttonContext != null) {
+                _handleExport(buttonContext);
+              }
+            },
+          ),
+        ],
       ),
       body: Center(
         child: Padding(
