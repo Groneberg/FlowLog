@@ -6,8 +6,15 @@ import '../../../data/services/import_service.dart';
 import '../widgets/export_selection_sheet.dart';
 import '../widgets/import_selection_sheet.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  String _selectedLanguageCode = 'de';
 
   Future<void> _showExportSelection(BuildContext context) async {
     final strategy = await showModalBottomSheet<ExportStrategy>(
@@ -203,6 +210,28 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 28),
+          _SectionHeader(title: 'SPRACHE'),
+          const SizedBox(height: 12),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                childAspectRatio: 2.8,
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                children: [
+                  _buildLanguageOption(code: 'de', title: 'Deutsch'),
+                  _buildLanguageOption(code: 'en', title: 'English'),
+                  // Add 'es' here when Spanish is supported.
+                  // Add 'fr' here when French is supported.
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 28),
           _SectionHeader(title: 'ÜBER FLOWLOG'),
           const SizedBox(height: 12),
           Card(
@@ -217,6 +246,56 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLanguageOption({required String code, required String title}) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isSelected = _selectedLanguageCode == code;
+
+    return InkWell(
+      onTap: () {
+        setState(() => _selectedLanguageCode = code);
+        // TODO: Connect to LanguageService
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 48),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: isSelected ? colorScheme.primaryContainer : null,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected
+                  ? colorScheme.primary
+                  : colorScheme.outlineVariant,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                isSelected ? Icons.check : Icons.language_outlined,
+                color: isSelected
+                    ? colorScheme.onPrimaryContainer
+                    : colorScheme.onSurfaceVariant,
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: TextStyle(
+                  color: isSelected
+                      ? colorScheme.onPrimaryContainer
+                      : colorScheme.onSurface,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
