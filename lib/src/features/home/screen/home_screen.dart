@@ -3,7 +3,9 @@ import 'package:flow_log/src/features/GasDetail/screen/gas_detail_screen.dart';
 import 'package:flow_log/src/features/HotWaterDetail/screen/hot_water_detail_screen.dart';
 import 'package:flow_log/src/features/ColdWaterDetail/screen/cold_water_detail_screen.dart';
 import 'package:flow_log/src/features/Settings/screen/settings_screen.dart';
+import 'package:flow_log/src/language/language_service.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../widgets/big_menu_button.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -11,14 +13,16 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final strings = context.watch<LanguageService>().homeStrings;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('FlowLog'),
+        title: Text(strings.appTitle),
         centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined),
-            tooltip: 'Einstellungen',
+            tooltip: strings.settingsTooltip,
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const SettingsScreen()),
@@ -44,7 +48,7 @@ class HomeScreen extends StatelessWidget {
                     size: 52,
                     color: Colors.amber,
                   ),
-                  label: 'Strom',
+                  label: strings.electricity,
                   color: Colors.amber.withValues(alpha: 0.1),
                   onTap: () {
                     Navigator.push(
@@ -61,7 +65,7 @@ class HomeScreen extends StatelessWidget {
                     size: 52,
                     color: Colors.orange,
                   ),
-                  label: 'Gas',
+                  label: strings.gas,
                   color: Colors.orange.withValues(alpha: 0.1),
                   onTap: () {
                     Navigator.push(
@@ -78,7 +82,7 @@ class HomeScreen extends StatelessWidget {
                     size: 52,
                     color: Colors.blue,
                   ),
-                  label: 'Kaltwasser',
+                  label: strings.coldWater,
                   color: Colors.blue.withValues(alpha: 0.1),
                   onTap: () {
                     Navigator.push(
@@ -95,7 +99,7 @@ class HomeScreen extends StatelessWidget {
                     size: 52,
                     color: Colors.redAccent,
                   ),
-                  label: 'Warmwasser',
+                  label: strings.hotWater,
                   color: Colors.redAccent.withValues(alpha: 0.1),
                   onTap: () {
                     Navigator.push(
