@@ -3,20 +3,15 @@ import 'package:provider/provider.dart';
 
 import '../../../data/services/export_service.dart';
 import '../../../data/services/import_service.dart';
+import '../../../language/language_service.dart';
 import '../widgets/export_selection_sheet.dart';
 import '../widgets/import_selection_sheet.dart';
 
-class SettingsScreen extends StatefulWidget {
+class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
-  @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
-}
-
-class _SettingsScreenState extends State<SettingsScreen> {
-  String _selectedLanguageCode = 'de';
-
   Future<void> _showExportSelection(BuildContext context) async {
+    final strings = context.read<LanguageService>().settingsStrings;
     final strategy = await showModalBottomSheet<ExportStrategy>(
       context: context,
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -31,8 +26,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (strategy == null || !context.mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Daten werden exportiert...'),
+      SnackBar(
+        content: Text(strings.exportInProgress),
         duration: Duration(seconds: 2),
       ),
     );
@@ -42,15 +37,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
         context: context,
         strategy: strategy,
       );
+      if (!context.mounted) return;
     } catch (error) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Fehler beim Export: $error'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(strings.exportError(error.toString())),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -77,57 +72,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _importCsv(BuildContext context) async {
+    final strings = context.read<LanguageService>().settingsStrings;
     final importService = context.read<ImportService>();
 
     try {
       final count = await importService.importDataFromCsv();
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              count > 0
-                  ? '$count Einträge erfolgreich importiert!'
-                  : 'Keine gültigen Einträge gefunden.',
-            ),
-            backgroundColor: count > 0 ? Colors.green : Colors.orange,
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            count > 0
+                ? strings.importCsvSuccess(count)
+                : strings.importCsvEmpty,
           ),
-        );
-      }
+          backgroundColor: count > 0 ? Colors.green : Colors.orange,
+        ),
+      );
     } catch (error) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Fehler beim Import: $error'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(strings.importCsvError(error.toString())),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
   Future<void> _restoreJson(BuildContext context) async {
+    final strings = context.read<LanguageService>().settingsStrings;
     final decision = await showDialog<String>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Datenbank überschreiben?'),
-        content: const Text(
-          'Beim Wiederherstellen eines Backups werden alle aktuellen '
-          'Zählerstände gelöscht und durch das Backup ersetzt.',
-        ),
+        title: Text(strings.restoreDialogTitle),
+        content: Text(strings.restoreDialogContent),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop('cancel'),
-            child: const Text('Abbrechen'),
+            child: Text(strings.restoreDialogCancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop('export'),
-            child: const Text('Vorher sichern'),
+            child: Text(strings.restoreDialogBackupFirst),
           ),
           FilledButton.icon(
             onPressed: () => Navigator.of(dialogContext).pop('overwrite'),
             icon: const Icon(Icons.warning_rounded),
-            label: const Text('Überschreiben & Wiederherstellen'),
+            label: Text(strings.restoreDialogOverwrite),
             style: FilledButton.styleFrom(
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
@@ -152,38 +144,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     try {
       final count = await importService.restoreFromJson();
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              count > 0
-                  ? '$count Einträge erfolgreich wiederhergestellt!'
-                  : 'Das Backup enthält keine Einträge.',
-            ),
-            backgroundColor: count > 0 ? Colors.green : Colors.orange,
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            count > 0 ? strings.restoreSuccess(count) : strings.restoreEmpty,
           ),
-        );
-      }
+          backgroundColor: count > 0 ? Colors.green : Colors.orange,
+        ),
+      );
     } catch (error) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Fehler beim Wiederherstellen: $error'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(strings.restoreError(error.toString())),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final languageService = context.watch<LanguageService>();
+    final strings = languageService.settingsStrings;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Einstellungen'), centerTitle: true),
+      appBar: AppBar(title: Text(strings.settingsTitle), centerTitle: true),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _SectionHeader(title: 'DATENVERWALTUNG'),
+          _SectionHeader(title: strings.sectionDataManagement),
           const SizedBox(height: 12),
           Card(
             child: Padding(
@@ -193,7 +184,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Expanded(
                     child: _SettingsAction(
                       icon: Icons.upload_file_outlined,
-                      title: 'Exportieren',
+                      title: strings.actionExport,
                       onTap: () => _showExportSelection(context),
                     ),
                   ),
@@ -201,7 +192,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Expanded(
                     child: _SettingsAction(
                       icon: Icons.download_for_offline_outlined,
-                      title: 'Importieren',
+                      title: strings.actionImport,
                       onTap: () => _showImportSelection(context),
                     ),
                   ),
@@ -210,7 +201,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           const SizedBox(height: 28),
-          _SectionHeader(title: 'SPRACHE'),
+          _SectionHeader(title: strings.sectionLanguage),
           const SizedBox(height: 12),
           Card(
             child: Padding(
@@ -223,25 +214,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 mainAxisSpacing: 10,
                 crossAxisSpacing: 10,
                 children: [
-                  _buildLanguageOption(code: 'de', title: 'Deutsch'),
-                  _buildLanguageOption(code: 'en', title: 'English'),
-                  // Add 'es' here when Spanish is supported.
-                  // Add 'fr' here when French is supported.
+                  _LanguageTile(
+                    code: 'de',
+                    title: 'Deutsch',
+                    isSelected: languageService.isGerman,
+                    onTap: () => languageService.setLanguage('de'),
+                  ),
+                  _LanguageTile(
+                    code: 'en',
+                    title: 'English',
+                    isSelected: languageService.isEnglish,
+                    onTap: () => languageService.setLanguage('en'),
+                  ),
                 ],
               ),
             ),
           ),
           const SizedBox(height: 28),
-          _SectionHeader(title: 'ÜBER FLOWLOG'),
+          _SectionHeader(title: strings.sectionAbout),
           const SizedBox(height: 12),
           Card(
             child: ListTile(
               leading: const Icon(Icons.shield_outlined),
-              title: const Text('FlowLog v1.0.0'),
-              subtitle: const Text(
-                '100% Offline & Local-First. Deine Verbrauchsdaten '
-                'verlassen niemals dieses Gerät.',
-              ),
+              title: Text(strings.aboutTitle),
+              subtitle: Text(strings.aboutSubtitle),
               contentPadding: const EdgeInsets.all(16),
             ),
           ),
@@ -249,16 +245,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
+}
 
-  Widget _buildLanguageOption({required String code, required String title}) {
+class _LanguageTile extends StatelessWidget {
+  const _LanguageTile({
+    required this.code,
+    required this.title,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final String code;
+  final String title;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final isSelected = _selectedLanguageCode == code;
 
     return InkWell(
-      onTap: () {
-        setState(() => _selectedLanguageCode = code);
-        // TODO: Connect to LanguageService
-      },
+      onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 48),
