@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:drift/drift.dart' as drift;
+import 'package:flow_log/src/language/language_service.dart';
 import '../../../data/services/database_service.dart';
 import '../../../data/services/validation_service.dart';
 import '../../../data/model/meter_entries.dart';
+import '../../../language/strings/cold_water_detail_strings.dart';
 
 enum TimePeriod { last, day, week, month, year }
 
@@ -63,18 +65,18 @@ class _ColdWaterDetailScreenState extends State<ColdWaterDetailScreen> {
     return (dailyAverage * multiplier).toStringAsFixed(3);
   }
 
-  String _getPeriodLabel() {
+  String _getPeriodLabel(ColdWaterDetailStrings strings) {
     switch (_selectedPeriod) {
       case TimePeriod.last:
-        return 'Seit';
+        return strings.periodLast;
       case TimePeriod.day:
-        return 'T';
+        return strings.periodDay;
       case TimePeriod.week:
-        return 'W';
+        return strings.periodWeek;
       case TimePeriod.month:
-        return 'M';
+        return strings.periodMonth;
       case TimePeriod.year:
-        return 'J';
+        return strings.periodYear;
     }
   }
 
@@ -82,6 +84,7 @@ class _ColdWaterDetailScreenState extends State<ColdWaterDetailScreen> {
     BuildContext context,
     MeterEntry entry,
     AppDatabase database,
+    ColdWaterDetailStrings strings,
   ) async {
     final editController = TextEditingController(text: entry.value.toString());
     DateTime editDate = entry.timestamp;
@@ -92,7 +95,7 @@ class _ColdWaterDetailScreenState extends State<ColdWaterDetailScreen> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text('Kaltwasser-Eintrag bearbeiten'),
+              title: Text(strings.editDialogTitle),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -102,8 +105,8 @@ class _ColdWaterDetailScreenState extends State<ColdWaterDetailScreen> {
                       decimal: true,
                     ),
                     decoration: InputDecoration(
-                      labelText: 'Zählerstand',
-                      suffixText: 'm³',
+                      labelText: strings.readingFieldLabel,
+                      suffixText: strings.unit,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -119,7 +122,7 @@ class _ColdWaterDetailScreenState extends State<ColdWaterDetailScreen> {
                   const SizedBox(height: 16),
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text("Datum der Messung"),
+                    title: Text(strings.editDialogDateLabel),
                     subtitle: Text("${editDate.toLocal()}".split(' ')[0]),
                     leading: const Icon(
                       Icons.calendar_today,
@@ -142,8 +145,8 @@ class _ColdWaterDetailScreenState extends State<ColdWaterDetailScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text(
-                    'Abbrechen',
+                  child: Text(
+                    strings.cancelButton,
                     style: TextStyle(color: Colors.grey),
                   ),
                 ),
@@ -165,7 +168,7 @@ class _ColdWaterDetailScreenState extends State<ColdWaterDetailScreen> {
                     }
                     if (context.mounted) Navigator.pop(context);
                   },
-                  child: const Text('Speichern'),
+                  child: Text(strings.saveButton),
                 ),
               ],
             );
@@ -179,10 +182,11 @@ class _ColdWaterDetailScreenState extends State<ColdWaterDetailScreen> {
   Widget build(BuildContext context) {
     const themeColor = Colors.blue;
     final database = Provider.of<AppDatabase>(context);
+    final strings = context.watch<LanguageService>().coldWaterDetailStrings;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Kaltwasserdetails'),
+        title: Text(strings.appBarTitle),
         backgroundColor: themeColor.withValues(alpha: 0.2),
         elevation: 0,
       ),
@@ -194,8 +198,8 @@ class _ColdWaterDetailScreenState extends State<ColdWaterDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
-                  'Neuen Zählerstand eingeben',
+                Text(
+                  strings.newReadingSectionTitle,
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
@@ -205,7 +209,7 @@ class _ColdWaterDetailScreenState extends State<ColdWaterDetailScreen> {
                     decimal: true,
                   ),
                   decoration: InputDecoration(
-                    labelText: 'Zählerstand',
+                    labelText: strings.readingFieldLabel,
                     filled: true,
                     fillColor: Theme.of(context).scaffoldBackgroundColor,
                     border: OutlineInputBorder(
@@ -215,7 +219,7 @@ class _ColdWaterDetailScreenState extends State<ColdWaterDetailScreen> {
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(color: themeColor, width: 2),
                     ),
-                    suffixText: 'm³',
+                    suffixText: strings.unit,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -242,7 +246,7 @@ class _ColdWaterDetailScreenState extends State<ColdWaterDetailScreen> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Datum: ${_selectedDate.toLocal().toString().split(' ')[0]}',
+                          '${strings.datePrefix}${_selectedDate.toLocal().toString().split(' ')[0]}',
                           style: const TextStyle(fontWeight: FontWeight.w500),
                         ),
                       ],
@@ -311,8 +315,8 @@ class _ColdWaterDetailScreenState extends State<ColdWaterDetailScreen> {
                     });
                     if (mounted) FocusScope.of(context).unfocus();
                   },
-                  child: const Text(
-                    'Eintrag speichern',
+                  child: Text(
+                    strings.saveEntryButton,
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -359,26 +363,26 @@ class _ColdWaterDetailScreenState extends State<ColdWaterDetailScreen> {
                             children: [
                               SegmentedButton<TimePeriod>(
                                 showSelectedIcon: false,
-                                segments: const [
+                                segments: [
                                   ButtonSegment(
                                     value: TimePeriod.last,
-                                    label: Text('Seit'),
+                                    label: Text(strings.periodLast),
                                   ),
                                   ButtonSegment(
                                     value: TimePeriod.day,
-                                    label: Text('T'),
+                                    label: Text(strings.periodDay),
                                   ),
                                   ButtonSegment(
                                     value: TimePeriod.week,
-                                    label: Text('W'),
+                                    label: Text(strings.periodWeek),
                                   ),
                                   ButtonSegment(
                                     value: TimePeriod.month,
-                                    label: Text('M'),
+                                    label: Text(strings.periodMonth),
                                   ),
                                   ButtonSegment(
                                     value: TimePeriod.year,
-                                    label: Text('J'),
+                                    label: Text(strings.periodYear),
                                   ),
                                 ],
                                 selected: {_selectedPeriod},
@@ -405,8 +409,8 @@ class _ColdWaterDetailScreenState extends State<ColdWaterDetailScreen> {
                                     children: [
                                       Text(
                                         _selectedPeriod == TimePeriod.last
-                                            ? 'Letzter Verbrauch'
-                                            : 'Durchschnittlicher Verbrauch',
+                                            ? strings.latestConsumption
+                                            : strings.averageConsumption,
                                         style: const TextStyle(
                                           fontWeight: FontWeight.w500,
                                           color: Colors.grey,
@@ -414,7 +418,7 @@ class _ColdWaterDetailScreenState extends State<ColdWaterDetailScreen> {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        '${_calculateValue(entries)} m³',
+                                        '${_calculateValue(entries)} ${strings.unit}',
                                         style: const TextStyle(
                                           fontSize: 28,
                                           fontWeight: FontWeight.bold,
@@ -425,7 +429,7 @@ class _ColdWaterDetailScreenState extends State<ColdWaterDetailScreen> {
                                   Padding(
                                     padding: const EdgeInsets.only(bottom: 4.0),
                                     child: Text(
-                                      _getPeriodLabel(),
+                                      _getPeriodLabel(strings),
                                       style: const TextStyle(
                                         color: Colors.grey,
                                         fontWeight: FontWeight.bold,
@@ -439,8 +443,8 @@ class _ColdWaterDetailScreenState extends State<ColdWaterDetailScreen> {
                         ),
                       ),
                       const SizedBox(height: 24),
-                      const Text(
-                        'Verlauf',
+                      Text(
+                        strings.historyTitle,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -448,7 +452,7 @@ class _ColdWaterDetailScreenState extends State<ColdWaterDetailScreen> {
                       ),
                       const SizedBox(height: 16),
                       if (entries.isEmpty)
-                        const Center(child: Text('Noch keine Einträge'))
+                        Center(child: Text(strings.emptyHistoryNotice))
                       else
                         ...entries.asMap().entries.map((entryWithIndex) {
                           final entry = entryWithIndex.value;
@@ -480,9 +484,9 @@ class _ColdWaterDetailScreenState extends State<ColdWaterDetailScreen> {
                               ScaffoldMessenger.of(context).clearSnackBars();
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: const Text('Eintrag gelöscht'),
+                                  content: Text(strings.entryDeletedSnackbar),
                                   action: SnackBarAction(
-                                    label: 'Rückgängig',
+                                    label: strings.undoAction,
                                     onPressed: () async {
                                       await database
                                           .into(database.meterEntries)
@@ -494,8 +498,12 @@ class _ColdWaterDetailScreenState extends State<ColdWaterDetailScreen> {
                             },
                             child: ListTile(
                               contentPadding: EdgeInsets.zero,
-                              onTap: () =>
-                                  _showEditDialog(context, entry, database),
+                              onTap: () => _showEditDialog(
+                                context,
+                                entry,
+                                database,
+                                strings,
+                              ),
                               leading: CircleAvatar(
                                 backgroundColor: themeColor.withValues(
                                   alpha: 0.2,
@@ -507,7 +515,7 @@ class _ColdWaterDetailScreenState extends State<ColdWaterDetailScreen> {
                                 ),
                               ),
                               title: Text(
-                                '${entry.value.toStringAsFixed(3)} m³',
+                                '${entry.value.toStringAsFixed(3)} ${strings.unit}',
                               ),
                               subtitle: Text(
                                 '${entry.timestamp.year}-${entry.timestamp.month.toString().padLeft(2, '0')}-${entry.timestamp.day.toString().padLeft(2, '0')}',
@@ -515,7 +523,7 @@ class _ColdWaterDetailScreenState extends State<ColdWaterDetailScreen> {
                               trailing: Text(
                                 diff != null
                                     ? '+ ${diff.toStringAsFixed(3)}'
-                                    : 'Anfang',
+                                    : strings.initialEntryLabel,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.grey,
