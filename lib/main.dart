@@ -3,14 +3,23 @@ import 'package:flow_log/src/data/services/export_service.dart';
 import 'package:flow_log/src/data/services/import_service.dart';
 import 'package:flow_log/src/features/Home/screen/home_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
+import 'src/language/language_service.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
   final database = AppDatabase();
 
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider<LanguageService>(
+          create: (_) => LanguageService(prefs),
+        ),
         Provider<AppDatabase>(
           create: (_) => database,
           dispose: (_, db) => db.close(),
@@ -32,10 +41,19 @@ class FlowLogApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final languageService = context.watch<LanguageService>();
+
     return MaterialApp(
       title: 'FlowLog',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(brightness: Brightness.dark, primarySwatch: Colors.blue),
+      locale: languageService.currentLocale,
+      supportedLocales: const [Locale('de'), Locale('en')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       home: const HomeScreen(),
     );
   }
