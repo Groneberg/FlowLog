@@ -272,6 +272,7 @@ class _ColdWaterDetailScreenState extends State<ColdWaterDetailScreen> {
                       value,
                       MeterCategory.coldWater,
                       entryDate: _selectedDate,
+                      strings: context.read<LanguageService>().validationStrings,
                     );
 
                     if (result.status ==

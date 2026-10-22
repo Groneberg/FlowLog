@@ -1,4 +1,6 @@
 import 'package:drift/drift.dart';
+import 'package:flow_log/src/language/strings/validation_strings.dart';
+
 import '../model/meter_entries.dart';
 import 'database_service.dart';
 
@@ -20,13 +22,13 @@ class ValidationResult {
 class ValidationService {
   final AppDatabase _db;
 
-  // WICHTIG: Nutze geschweifte Klammern für den benannten Parameter
   ValidationService({required AppDatabase dbService}) : _db = dbService;
 
   Future<ValidationResult> validateEntry(
     double newValue,
     MeterCategory category, {
     DateTime? entryDate,
+    ValidationStrings? strings,
   }) async {
     final lastEntry =
         await (_db.select(_db.meterEntries)
@@ -54,10 +56,16 @@ class ValidationService {
     final delta = newValue - lastValue;
 
     if (newValue < lastValue) {
+      final message = strings != null
+          ? strings.errorLowerThanPrevious(
+              currentValue: newValue,
+              previousValue: lastValue,
+            )
+          : "Fehler: $newValue ist niedriger als der Vorwert ($lastValue).";
+
       return ValidationResult(
         ValidationStatus.errorLowerThanPrevious,
-        message:
-            "Fehler: $newValue ist niedriger als der Vorwert ($lastValue).",
+        message: message,
         delta: delta,
       );
     }
@@ -75,10 +83,16 @@ class ValidationService {
     };
 
     if (delta > threshold) {
+      final formattedDelta = delta.toStringAsFixed(
+        category == MeterCategory.electricity ? 1 : 3,
+      );
+      final message = strings != null
+          ? strings.warningExtremelyHigh(delta: formattedDelta, unit: unit)
+          : "Warnung: Ungewöhnlich hoher Verbrauch (+$formattedDelta $unit).";
+
       return ValidationResult(
         ValidationStatus.warningExtremelyHigh,
-        message:
-            "Warnung: Ungewöhnlich hoher Verbrauch (+${delta.toStringAsFixed(category == MeterCategory.electricity ? 1 : 3)} $unit).",
+        message: message,
         delta: delta,
       );
     }

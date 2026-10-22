@@ -273,6 +273,7 @@ class _ElectricityDetailScreenState extends State<ElectricityDetailScreen> {
                       value,
                       MeterCategory.electricity,
                       entryDate: _selectedDate,
+                      strings: context.read<LanguageService>().validationStrings,
                     );
 
                     if (result.status ==

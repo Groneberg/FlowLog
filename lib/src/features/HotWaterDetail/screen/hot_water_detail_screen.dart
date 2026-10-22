@@ -272,6 +272,7 @@ class _HotWaterDetailScreenState extends State<HotWaterDetailScreen> {
                       value,
                       MeterCategory.hotWater,
                       entryDate: _selectedDate,
+                      strings: context.read<LanguageService>().validationStrings,
                     );
 
                     if (result.status ==

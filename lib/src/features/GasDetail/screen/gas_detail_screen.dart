@@ -272,6 +272,7 @@ class _GasDetailScreenState extends State<GasDetailScreen> {
                       value,
                       MeterCategory.gas,
                       entryDate: _selectedDate,
+                      strings: context.read<LanguageService>().validationStrings,
                     );
 
                     if (result.status ==
