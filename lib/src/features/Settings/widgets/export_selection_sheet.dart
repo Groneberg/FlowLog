@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../data/services/export_service.dart';
+import '../../../language/language_service.dart';
 
 class ExportSelectionSheet extends StatelessWidget {
   const ExportSelectionSheet({super.key, required this.onSelect});
@@ -9,6 +11,8 @@ class ExportSelectionSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final strings = context.watch<LanguageService>().exportSelectionStrings;
+
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -17,23 +21,23 @@ class ExportSelectionSheet extends StatelessWidget {
           children: [
             const SizedBox(width: 48, child: Divider(thickness: 2)),
             const SizedBox(height: 8),
-            const Text(
-              'Export auswählen',
+            Text(
+              strings.sheetTitle,
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             _ExportOption(
               icon: Icons.table_chart_outlined,
-              title: 'Tabellendaten (CSV)',
-              subtitle: 'Für Excel, Tabellen und Auswertungen',
+              title: strings.csvOptionTitle,
+              subtitle: strings.csvOptionSubtitle,
               strategy: CsvExportStrategy(),
               onSelect: onSelect,
             ),
             const SizedBox(height: 12),
             _ExportOption(
               icon: Icons.backup_outlined,
-              title: 'Vollständiges Backup (JSON)',
-              subtitle: 'Vollständige Datensicherung zur Wiederherstellung',
+              title: strings.jsonOptionTitle,
+              subtitle: strings.jsonOptionSubtitle,
               strategy: JsonExportStrategy(),
               onSelect: onSelect,
             ),

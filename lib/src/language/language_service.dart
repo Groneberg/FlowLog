@@ -9,16 +9,25 @@ import 'strings/de/home_strings_de.dart';
 import 'strings/de/hot_water_detail_strings_de.dart';
 import 'strings/de/settings_strings_de.dart';
 import 'strings/electricity_detail_strings.dart';
+import 'strings/export_selection_strings.dart';
+import 'strings/import_selection_strings.dart';
+import 'strings/de/export_selection_strings_de.dart';
+import 'strings/de/import_selection_strings_de.dart';
 import 'strings/en/cold_water_detail_strings_en.dart';
 import 'strings/en/electricity_detail_strings_en.dart';
+import 'strings/en/export_selection_strings_en.dart';
 import 'strings/en/gas_detail_strings_en.dart';
 import 'strings/en/home_strings_en.dart';
 import 'strings/en/hot_water_detail_strings_en.dart';
+import 'strings/en/import_selection_strings_en.dart';
 import 'strings/en/settings_strings_en.dart';
 import 'strings/gas_detail_strings.dart';
 import 'strings/home_strings.dart';
 import 'strings/hot_water_detail_strings.dart';
 import 'strings/settings_strings.dart';
+import 'strings/validation_strings.dart';
+import 'strings/de/validation_strings_de.dart';
+import 'strings/en/validation_strings_en.dart';
 
 class LanguageService extends ChangeNotifier {
   LanguageService(this._prefs)
@@ -37,6 +46,15 @@ class LanguageService extends ChangeNotifier {
 
   SettingsStrings get settingsStrings =>
       isGerman ? const SettingsStringsDe() : const SettingsStringsEn();
+
+    ValidationStrings get validationStrings =>
+      isGerman ? const ValidationStringsDe() : const ValidationStringsEn();
+
+    ExportSelectionStrings get exportSelectionStrings =>
+      isGerman ? const ExportSelectionStringsDe() : const ExportSelectionStringsEn();
+
+    ImportSelectionStrings get importSelectionStrings =>
+      isGerman ? const ImportSelectionStringsDe() : const ImportSelectionStringsEn();
 
   ColdWaterDetailStrings get coldWaterDetailStrings => isGerman
       ? const ColdWaterDetailStringsDe()
